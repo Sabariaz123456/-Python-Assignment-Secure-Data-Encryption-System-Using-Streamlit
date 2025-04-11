@@ -1,16 +1,18 @@
 import streamlit as st
 import hashlib
+import os
 from cryptography.fernet import Fernet
 
-# Fernet encryption setup
-fernet_key = Fernet.generate_key()
-cipher_suite = Fernet(fernet_key)
+# ----- Fernet encryption setup -----
+# Use a fixed key (recommended to store in environment variable)
+FERNET_KEY = os.environ.get("FERNET_KEY", b'D0SmjKfRE35hRGb2Qa7RPqhCMBlJr4K5JMK0X0Lo8Ps=')
+cipher_suite = Fernet(FERNET_KEY)
 
-# In-memory storage
+# ----- In-memory storage -----
 stored_data = {}
 failed_attempts = {}
 
-# Simple login credentials
+# ----- Simple login credentials -----
 AUTHORIZED_USER = "admin"
 AUTHORIZED_PASS = "password123"
 
@@ -44,7 +46,6 @@ def subtext(msg, color="#888"):
     st.markdown(f"<p style='color:{color}; font-size:16px'>{msg}</p>", unsafe_allow_html=True)
 
 # ----- Pages -----
-
 def login_page():
     colored_header("Reauthorization Required", "🔐")
     subtext("Too many failed attempts. Please log in again.")
@@ -57,6 +58,7 @@ def login_page():
             st.session_state.authorized = True
             reset_attempts(username)
             st.success("✅ Login successful! You can now retry.")
+            st.session_state.page = "home"
         else:
             st.error("❌ Invalid credentials. Try again.")
 
@@ -127,17 +129,18 @@ def retrieve_data_page():
         st.session_state.page = "home"
 
 # ----- Main App -----
-
 st.set_page_config(page_title="Secure Encryptor", page_icon="🛡️", layout="centered")
 
+# Initialize session state
 if "page" not in st.session_state:
     st.session_state.page = "home"
+if "authorized" not in st.session_state:
+    st.session_state.authorized = False
 
-st.markdown(
-    "<style>div.block-container{padding-top:2rem;}</style>",
-    unsafe_allow_html=True,
-)
+# Global Style
+st.markdown("<style>div.block-container{padding-top:2rem;}</style>", unsafe_allow_html=True)
 
+# Page routing
 if st.session_state.page == "home":
     home_page()
 elif st.session_state.page == "insert":
@@ -146,4 +149,7 @@ elif st.session_state.page == "retrieve":
     retrieve_data_page()
 elif st.session_state.page == "login":
     login_page()
+else:
+    st.session_state.page = "home"
+
 
